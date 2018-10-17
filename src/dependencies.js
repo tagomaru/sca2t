@@ -9,7 +9,7 @@ const moment = require('moment')
 //const graphviz = require('graphviz')
 //const { linearize } = require('c3-linearization')
 
-let definition = { "contracts": new Array(), "inheritances": new Array(), "uses": new Array() }
+let definition = { "contracts": new Array(), "inheritances": new Array(), "uses": new Array(), "functions": {}, "modifiers": {} }
 
 export function dependencies(files) {
   if (files.length === 0) {
@@ -51,6 +51,16 @@ function analyze(file) {
   const ast = parser.parse(content)
   let imports = new Map()
 
+  // search all of the contracts on this file.
+  parser.visit(ast, {
+    ContractDefinition(node) {
+      let contractName = node.name;
+      if (definition.contracts.indexOf(contractName) === -1) {
+        definition.contracts.push(contractName)
+      }
+    }
+  });
+
   parser.visit(ast, {
     ImportDirective(node) {
       let contractName = path.parse(node.path).name
@@ -67,6 +77,7 @@ function analyze(file) {
       imports.set(contractName, absPath)
     },
 
+    // parse contract
     ContractDefinition(node) {
       let contractName = node.name
       if (definition.contracts.indexOf(contractName) === -1) {
@@ -93,7 +104,13 @@ function analyze(file) {
       }
 
       // using list
-      let using = []
+      let using = [];
+
+      // function list
+      let funcDefs = [];
+
+      // modifiers list
+      let modifiers = [];
 
       // visit contract body
       parser.visit(node.subNodes, {
@@ -103,12 +120,56 @@ function analyze(file) {
           using.push(libraryName)
         },
 
+        // add function definition
+        FunctionDefinition(node) {
+          let funcDef;
+          let name;
+          if(node.name === null) {
+            name = '&quot;constructor&quot;';
+          } else if(node.name === '') {
+            name = '&quot;fallback&quot;';
+          } else {
+            name = node.name;
+          }
+          let visibility = node.visibility;
+          let modifiers = node.modifiers;
+          let stateMutability = node.stateMutability;
+          let isConstructor = node.isConstructor;
+          funcDef = { name, visibility, modifiers, stateMutability, isConstructor };
+          funcDefs.push(funcDef);
+        },
+
+        // add modifier definition
+        ModifierDefinition(node) {
+          modifiers.push(node.name);
+        },
+
         // add user defined type contract
         UserDefinedTypeName(node) {
-          let namePath = node.namePath
-          using.push(namePath)
-        }
+          let name = node.namePath
+          if (definition.contracts.indexOf(name) > -1 || imports.has(name)) {
+            using.push(name);
+          }
+        },
+
+        // add member access for like 'ConvertLiv.convert'. In this case, this gets 'ConvertLiv'.
+        MemberAccess(node) {
+          let name = node.expression.name;
+          if (definition.contracts.indexOf(name) > -1 || imports.has(name)) {
+            using.push(name);
+          }
+        },
       })
+
+      // add functions to definition
+      if (!definition.functions[contractName]) {
+        definition.functions[contractName] = funcDefs;
+      }
+
+      // add modifiers to definition
+      if (!definition.modifiers[contractName]) {
+        definition.modifiers[contractName] = modifiers;
+      }
 
       for (let dep of using) {
         if (definition.contracts.indexOf(dep) === -1) {
@@ -162,7 +223,7 @@ function reportGenerate(definition) {
   // generate file name.
   const m = moment()
   const timestamp = m.format('YYYYMMDDHHmmss')
-  const outputFileName = 'inherianddepen_' + timestamp + '.html'
+  const outputFileName = 'dependencies_' + timestamp + '.html'
 
   // generate report
   let output = template.replace(/{{definition}}/g, outputJSON)

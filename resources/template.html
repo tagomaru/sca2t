@@ -46,7 +46,7 @@
             color: #eeeeee;
         }
 
-        .description {
+        .description, .functions, .modifiers {
             font-size: 15px;
             margin-top: 25px;
             padding: 13px;
@@ -118,29 +118,42 @@
         <!-- explanation -->
         <div class="description">
             <h4>Description</h4>
-            <p>This visualizes dependencies of inheritances, using declaration, and user defined type among solidity contracts.</p>
-            <p>If you cannot see a diagram on the above, you should open this file in Chrome or Firefox.</p>
+            <p>This visualizes dependencies of inheritances, using declaration, and user defined type among solidity
+                contracts.</p>
+            <p>If you cannot see a diagram on the above, you may need to open this file in Chrome or Firefox.</p>
             <p>Solid arrow shows inheritance and dotted arrow shows either using or user defined type.</p>
         </div>
         <!-- /explanation -->
+
+        <!-- functions -->
+        <div class="functions" id="functions">
+            <h4>functions</h4>
+        </div>
+        <!-- /functions -->
+
+        <!-- modifiers -->
+        <div class="modifiers" id="modifiers">
+            <h4>modifiers</h4>
+        </div>
+        <!-- /functions -->
     </div>
 
     <!--  jsplumb -->
     <script>
-    {{jsplumb.min.js}}
+        {{jsplumb.min.js}}
     </script>
 
     <!--  jquery -->
     <script>
-    {{jquery.min.js}}
+        {{jquery.min.js}}
     </script>
 
     <!--  main code -->
     <script>
         $(function () {
+            // definiton of contracts.
+            var def = JSON.parse('{{definition}}');
             jsPlumb.ready(function () {
-                // definiton of contracts.
-                var def = JSON.parse('{{definition}}');
 
                 var levels = [0];   // arr index is level. element is the number of node on the level.
                 var nodeList = [];
@@ -278,6 +291,41 @@
 
                 }, true);
             });
+
+            // functions table
+            $('#functions').append('<table border="1" id="functions_table"><tr><th>contract</th><th>func</th><th>visibility</th><th>modifiers</th><th>stateMutability</th></tr>');
+            for(var contract in def.functions) {
+                var isFirst = true;
+                def.functions[contract].forEach(function(func) {
+                    var name = func.name;
+                    var visibility = func.visibility;
+                    var modifiers = func.modifiers.map(function(value) {
+                        return value.name;
+                    }).join(', ');
+                    var stateMutability = func.stateMutability === null ? '' : func.stateMutability;
+                    if(isFirst) {
+                        $('#functions_table').append('<tr><td>' + contract + '</td><td>' + name + '</td><td>' + visibility + '</td><td>' + modifiers + '</td><td>' + stateMutability + '</td></tr>');
+                        isFirst = false;
+                    } else {
+                        $('#functions_table').append('<tr><td><font color="#C0C0C0">' + contract + '</font></td><td>' + name + '</td><td>' + visibility + '</td><td>' + modifiers + '</td><td>' + stateMutability + '</td></tr>');
+                    }
+                });
+            }
+
+            // modifiers table
+            $('#modifiers').append('<table border="1" id="modifiers_table"><tr><th>contract</th><th>modifier</th></tr>');
+            for(var contract in def.modifiers) {
+                var isFirst = true;
+                def.modifiers[contract].forEach(function(modifier){
+                    var name = modifier;
+                    if(isFirst) {
+                        $('#modifiers_table').append('<tr><td>' + contract + '</td><td>' + name + '</td></tr>');
+                        isFirst = false;
+                    } else {
+                        $('#modifiers_table').append('<tr><td><font color="#C0C0C0">' + contract + '</font></td><td>' + name + '</td></tr>');
+                    }
+                });
+            }
         });
     </script>
 </body>
