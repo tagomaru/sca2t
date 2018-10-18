@@ -46,7 +46,7 @@
             color: #eeeeee;
         }
 
-        .description, .functions, .modifiers {
+        .description, .functions, .modifiers, .contracts {
             font-size: 15px;
             margin-top: 25px;
             padding: 13px;
@@ -125,6 +125,12 @@
         </div>
         <!-- /explanation -->
 
+        <!-- contracts -->
+        <div class="contracts" id="contracts">
+            <h4>contracts</h4>
+        </div>
+        <!-- /contracts -->
+
         <!-- functions -->
         <div class="functions" id="functions">
             <h4>functions</h4>
@@ -161,7 +167,7 @@
                 var usesRelationList = [];
 
 
-                for (let contractName of def.contracts) {
+                for (let contractName in def.contracts) {
                     addNode(contractName, 0);
                 }
 
@@ -292,6 +298,12 @@
                 }, true);
             });
 
+            // contracts table
+            $('#contracts').append('<table border="1" id="contracts_table"><tr><th>contract</th><th>path</th></tr>');
+            for(var contract in def.contracts) {
+                $('#contracts_table').append('<tr><td>' + contract + '</td><td>' + def.contracts[contract].path + '</td></tr>');
+            }
+            
             // functions table
             $('#functions').append('<table border="1" id="functions_table"><tr><th>contract</th><th>func</th><th>visibility</th><th>modifiers</th><th>stateMutability</th></tr>');
             for(var contract in def.functions) {

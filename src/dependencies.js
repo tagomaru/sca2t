@@ -9,7 +9,7 @@ const moment = require('moment')
 //const graphviz = require('graphviz')
 //const { linearize } = require('c3-linearization')
 
-let definition = { "contracts": new Array(), "inheritances": new Array(), "uses": new Array(), "functions": {}, "modifiers": {} }
+let definition = { "contracts": {}, "inheritances": new Array(), "uses": new Array(), "functions": {}, "modifiers": {} }
 
 export function dependencies(files) {
   if (files.length === 0) {
@@ -19,8 +19,10 @@ export function dependencies(files) {
 
   try {
     for (let file of files) {
+      let fileAbsPath = path.resolve(path.join(process.cwd(), file));
+      
       // analyze file
-      if (!analyze(file)) continue
+      if (!analyze(fileAbsPath)) continue
     }
 
     // generate report
@@ -55,8 +57,8 @@ function analyze(file) {
   parser.visit(ast, {
     ContractDefinition(node) {
       let contractName = node.name;
-      if (definition.contracts.indexOf(contractName) === -1) {
-        definition.contracts.push(contractName)
+      if (!definition.contracts[contractName] || definition.contracts[contractName] === null) {
+        definition.contracts[contractName] = { 'path': file.replace(/\\/g, '&#92;').replace(/:/g, '&#58;') };
       }
     }
   });
@@ -70,8 +72,7 @@ function analyze(file) {
         absPath = path.resolve(path.join(currentDir, node.path))
       } else {
         let modulesInstalledPath = getModulesInstalledPath(node.path)
-        let absPathObj = path.parse(modulesInstalledPath + node.path)
-        absPath = absPathObj.dir + path.sep + absPathObj.base
+        absPath = path.resolve(path.join(modulesInstalledPath, node.path))
       }
 
       imports.set(contractName, absPath)
@@ -80,9 +81,6 @@ function analyze(file) {
     // parse contract
     ContractDefinition(node) {
       let contractName = node.name
-      if (definition.contracts.indexOf(contractName) === -1) {
-        definition.contracts.push(contractName)
-      }
 
       dependencies[contractName] = node.baseContracts.map(spec =>
         spec.baseName.namePath
@@ -90,8 +88,8 @@ function analyze(file) {
 
       for (let i = dependencies[contractName].length - 1; i >= 0; i--) {
         let dep = dependencies[contractName][i]
-        if (definition.contracts.indexOf(dep) === -1) {
-          definition.contracts.push(dep)
+        if (!definition.contracts[dep]) {
+          definition.contracts[dep] = null;
         }
 
         if (definition.inheritances.indexOf(contractName + "=>" + dep) === -1) {
@@ -124,9 +122,9 @@ function analyze(file) {
         FunctionDefinition(node) {
           let funcDef;
           let name;
-          if(node.name === null) {
+          if (node.name === null) {
             name = '&quot;constructor&quot;';
-          } else if(node.name === '') {
+          } else if (node.name === '') {
             name = '&quot;fallback&quot;';
           } else {
             name = node.name;
@@ -147,7 +145,7 @@ function analyze(file) {
         // add user defined type contract
         UserDefinedTypeName(node) {
           let name = node.namePath
-          if (definition.contracts.indexOf(name) > -1 || imports.has(name)) {
+          if (definition.contracts[name] || imports.has(name)) {
             using.push(name);
           }
         },
@@ -155,7 +153,7 @@ function analyze(file) {
         // add member access for like 'ConvertLiv.convert'. In this case, this gets 'ConvertLiv'.
         MemberAccess(node) {
           let name = node.expression.name;
-          if (definition.contracts.indexOf(name) > -1 || imports.has(name)) {
+          if (definition.contracts[name] || imports.has(name)) {
             using.push(name);
           }
         },
@@ -172,8 +170,8 @@ function analyze(file) {
       }
 
       for (let dep of using) {
-        if (definition.contracts.indexOf(dep) === -1) {
-          definition.contracts.push(dep)
+        if (!definition.contracts[dep] ) {
+          definition.contracts[dep] = null;
         }
 
         if (definition.uses.indexOf(contractName + "=>" + dep) === -1) {
