@@ -9,7 +9,7 @@ const moment = require('moment')
 //const graphviz = require('graphviz')
 //const { linearize } = require('c3-linearization')
 
-let definition = { "contracts": {}, "inheritances": new Array(), "uses": new Array(), "functions": {}, "modifiers": {} }
+let definition = { "contracts": {}, "inheritances": new Array(), "uses": new Array(), "functions": {}, "modifiers": {}, "states": {} }
 
 export function dependencies(files) {
   if (files.length === 0) {
@@ -110,6 +110,9 @@ function analyze(file) {
       // modifiers list
       let modifiers = [];
 
+      // states list
+      let states = [];
+
       // visit contract body
       parser.visit(node.subNodes, {
         // add using declaration
@@ -142,6 +145,41 @@ function analyze(file) {
           modifiers.push(node.name);
         },
 
+        // add state definition
+        StateVariableDeclaration(node) {
+          //console.log(Object.getOwnPropertyNames(node));
+          console.log(node);
+
+          if(node.variables.length !== 1) {
+            throw new Error('Lenght of State Variable is only 1, but ' + node.variables.length);
+          }
+
+          let variable = node.variables[0];
+          let name = variable.name;
+          let visibility = variable.visibility;
+          let isConst = variable.isDeclaredConst;
+          let typeName = variable.typeName.type;
+          let type;
+          switch(typeName) {
+            case 'ElementaryTypeName':
+              type = variable.typeName.name;
+              break;
+            case 'ArrayTypeName':
+              type = 'array';
+              break;
+            case 'Mapping':
+              type = 'mapping';
+              break;
+            case 'UserDefinedTypeName':
+              type = variable.typeName.namePath;
+              break;
+            default:
+              type = typeName;
+          }
+
+          states.push({name, type, visibility, isConst})
+        },
+
         // add user defined type contract
         UserDefinedTypeName(node) {
           let name = node.namePath
@@ -167,6 +205,11 @@ function analyze(file) {
       // add modifiers to definition
       if (!definition.modifiers[contractName]) {
         definition.modifiers[contractName] = modifiers;
+      }
+
+      // add states to definition
+      if (!definition.states[contractName]) {
+        definition.states[contractName] = states;
       }
 
       for (let dep of using) {
