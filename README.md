@@ -42,8 +42,16 @@ If you want to search local, run the command on your package root, otherwise thi
 sca2t dependencies contracts/TGCrowdsale.sol
 ```
 
-
 <img src="https://raw.githubusercontent.com/wiki/tagomaru/sca2t/images/dependencies.png" height="236">
+
+### truffletogeth
+
+The `truffletogeth` command outputs variable definition for geth console from json file which truffle generates during building contract. You may want to use this when you operate contract on geth console after deploying contract on truffle.
+You can operate contract through variable name which you set after pasting the output on geth console.
+
+```shell
+sca2t truffletogeth TGCrowdsale 0xb3a46f71ffcc2b4d3f0d45efa75bec24c96ac84f build/contracts/TGCrowdsale.json
+```
 
 ## License
 

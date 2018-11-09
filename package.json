@@ -1,6 +1,6 @@
 {
   "name": "sca2t",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "sca2t (Smart Contract Audit Assistant Tool): A set of utilities for auditing Solidity contracts.",
   "main": "lib/index.js",
   "scripts": {

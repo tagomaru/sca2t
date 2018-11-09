@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { eventgen, dependencies } = require('../lib/index')
+const { eventgen, dependencies, truffletogeth } = require('../lib/index')
 
 require('yargs')
   .usage('$0 <cmd> [args]')
@@ -21,6 +21,23 @@ require('yargs')
       })
   }, (argv) => {
     dependencies(argv.files)
+  })
+  .command('truffletogeth <varname> <address> <jsonfilepath>', 'generate variable definition for geth from truffle build file..', (yargs) => {
+    yargs
+      .positional('varname', {
+        describe: 'variable name for geth',
+        type: 'string'
+      })
+      .positional('address', {
+        describe: 'contract address',
+        type: 'string'
+      })
+      .positional('jsonfilepath', {
+        describe: 'json file path which truffle generates during build',
+        type: 'string'
+      })
+  }, (argv) => {
+    truffletogeth(argv.varname, argv.address, argv.jsonfilepath)
   })
   .help()
   .alias('h', 'help')
