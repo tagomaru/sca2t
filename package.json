@@ -1,6 +1,6 @@
 {
   "name": "sca2t",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "sca2t (Smart Contract Audit Assistant Tool): A set of utilities for auditing Solidity contracts.",
   "main": "lib/index.js",
   "scripts": {
@@ -28,8 +28,8 @@
     "detect-installed": "^2.0.4",
     "dot-object": "^1.7.0",
     "get-installed-path": "^4.0.8",
-    "jquery": "^3.3.1",
-    "jsplumb": "^2.8.0",
+    "jquery": "3.3.1",
+    "jsplumb": "2.8.0",
     "moment": "^2.22.2",
     "solidity-parser-antlr": "^0.3.2",
     "yargs": "^12.0.2"
