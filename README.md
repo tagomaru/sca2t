@@ -50,8 +50,9 @@ The `truffletogeth` command outputs variable definition for geth console from js
 You can operate contract through variable name which you set after pasting the output on geth console.
 
 ```shell
-sca2t truffletogeth TGCrowdsale '0xb3a46f71ffcc2b4d3f0d45efa75bec24c96ac84f' build/contracts/TGCrowdsale.json
+sca2t truffletogeth TGCrowdsale "'0xb3a46f71ffcc2b4d3f0d45efa75bec24c96ac84f'" build/contracts/TGCrowdsale.json
 ```
+<span style="color:red">* Address should be surrounded with double quotes and single quotes<span>
 
 ## License
 
