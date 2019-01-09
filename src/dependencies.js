@@ -189,11 +189,22 @@ function analyze(file) {
         },
 
         // add member access for like 'ConvertLiv.convert'. In this case, this gets 'ConvertLiv'.
+        // Or if it is like 'Token.(_address)', then this gets 'Token'.
         MemberAccess(node) {
+          parser.visit(node, {
+            Identifier(node) {
+              let name = node.name;
+              if (definition.contracts[name] || imports.has(name)) {
+                using.push(name);
+              }
+            },
+          })
+          /*
           let name = node.expression.name;
           if (definition.contracts[name] || imports.has(name)) {
             using.push(name);
           }
+          */
         },
       })
 
